@@ -783,7 +783,7 @@ int main(void)
     // ->传参数时不调用拷贝构造函数，但返回的时候要创建无名临时对象，调用拷贝构造函数
     // ->如果返回的时标量值过程类似，只是不调用拷贝构造函数。
     TestFunc3(t); // 如果返回值没人接收则会立即销毁，调用析构函数。
-    cout << "=========================" << endl;
+    cout << "============||=============" << endl;
     // ->这里返回值有人接收，返回的临时对象对T进行赋值，调用赋值操作符，赋值完没有
     // ->存在的意义，被立即销毁。
     t = TestFunc3(t); // 如果返回的是函数内部[定义]的局部对象，返回该对象时不会
@@ -4469,18 +4469,82 @@ int main(void)
 //############################ 模板-其它 #######################################
 #if 1
 //==============================================================================
-// 缺省模板参数
-// 成员模板
-// 关键字typename
-// 派生类和模板
-// 面向对象与泛型
+// 1.缺省模板参数
+//     * 模板类不仅可以传递'数据类型'、'非类型'模板参数还可以传递'数据结构类型'
+//       template<typename T, typename CONT = std::vector<int>>,等号后面是缺省的参数
+// 2.成员模板
+//     * 在成员函数中使用类模板形参列表中未声明的参数类型，需要声明成员模板，将成员函数写成函数模板。
+//     * 不同的模板参数的模板类对象之间相互赋值时,需要成员模板.
+// 3.关键字typename
+//     *
+// 4.派生类和模板
+// 5.面向对象与泛型
 //==============================================================================
 #include <iostream>
 using std::cout;
 using std::endl;
+#include <vector>
+#include "Stack3.hpp"
+
+template<typename T>
+class MyClass
+{
+public:
+    // 相同类型的类对象赋值，可以访问私有成员
+    void Assign(const MyClass<T>& other) {
+        value_ = other.value_;
+    }
+private:
+    T value_;
+};
+
+template<typename T>
+class MyClass2
+{
+public:
+    template<class X>
+    // MyClass2<X>与MyClass2<T>有可能是不同类型,所以不能直接访问私有成员,
+    // 需要提供公有接口用于访问私有成员，可以访问私有成员.
+    void Assign(const MyClass2<X>& other) {
+        value_ = other.GetValue();
+    }
+    T GetValue() const {
+        return value_;
+    }
+private:
+    T value_;
+};
+
+template<typename T>
+class MyClass3
+{
+private:
+//  T::SubType * ptr1_; // T里面的静态数据成员与ptr_相乘,与意图不符
+    typename T::SubType * ptr_; // 加上typename关键字后,就会被解析成T里面的'子类型'的一个指针
+};
 
 int main(void)
 {
+//    Stack3<int, std::vector<int>> stack; // max_size以模板参数的形式传递给类模板
+//    stack.Push(1);
+//    stack.Push(2);
+//    stack.Push(3);
+//
+//    while(!stack.IsEmpty()) {
+//        cout << stack.Top() << endl;
+//        stack.Pop();
+//    }
+
+    MyClass<double> d;
+    MyClass<int> i;
+
+    d.Assign(d);
+//    d.Assign(i); // Error: MyClass<int> not compatible with MyClass<double>
+
+
+    MyClass2<double> d2;
+    MyClass2<int> i2;
+    d2.Assign(i2); // OK
 
     return 0;
 }
