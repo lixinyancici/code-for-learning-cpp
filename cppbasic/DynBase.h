@@ -2,15 +2,18 @@
 #define DYNBASE_H_
 
 #include <string>
+#include <iostream>
+using std::cout;
+using std::endl;
 using std::string;
 #include <map>
 using std::map;
 
 typedef void* (*CREATE_FUNC)();
 
-// ¹¤³§Àà->¶¯Ì¬´´½¨¶ÔÏó
-// ĞÂÔöÀàĞÍºó¹¤³§Àà´úÂë²»ĞèÒª×öÈÎºÎ¸Ä¶¯£¬±ÈÉÏÒ»½ÚÓÃif-elseºÃ¡£
-// ¶¼ÊÇ¾²Ì¬µÄ£¬½øÈëmainÖ®Ç°¾Í³õÊ¼»¯ºÃÁË¡£
+// å·¥å‚ç±»->åŠ¨æ€åˆ›å»ºå¯¹è±¡
+// æ–°å¢ç±»å‹åå·¥å‚ç±»ä»£ç ä¸éœ€è¦åšä»»ä½•æ”¹åŠ¨ï¼Œæ¯”ä¸Šä¸€èŠ‚ç”¨if-elseå¥½ã€‚
+// éƒ½æ˜¯é™æ€çš„ï¼Œè¿›å…¥mainä¹‹å‰å°±åˆå§‹åŒ–å¥½äº†ã€‚
 class DynObjectFactory
 {
 public:
@@ -18,7 +21,7 @@ public:
 	{
 		map<string,CREATE_FUNC>::const_iterator it;
 		it = map_cls_.find(name);
-		if (it == map_cls_.end()) { // Ã»ÕÒµ½
+		if (it == map_cls_.end()) { // æ²¡æ‰¾åˆ°
 			return NULL;
 		} else {
 			return it->second();
@@ -34,7 +37,7 @@ private:
 };
 
 // vs __declspec(selectany)
-__attribute((weak)) map<string, CREATE_FUNC> DynObjectFactory::map_cls_; // ÕâÀï²»ĞèÒªÔÙ¼Óstatic
+__attribute((weak)) map<string, CREATE_FUNC> DynObjectFactory::map_cls_; // è¿™é‡Œä¸éœ€è¦å†åŠ static
 
 //
 //#define REGISTER_CLASS(class_name) \
@@ -43,27 +46,64 @@ __attribute((weak)) map<string, CREATE_FUNC> DynObjectFactory::map_cls_; // ÕâÀï
 //}\
 //DynObjectFactory::Register(#class_name, class_name##NewInstance)
 
+// å…¨å±€ä½œç”¨äºä¸èƒ½è°ƒç”¨é™¤äº†mainä¹‹å¤–çš„å‡½æ•°,ä½†æ˜¯åˆ©ç”¨é™æ€å¯¹è±¡å…ˆäºmainæ„é€ +æ„é€ å‡½æ•°,å°±èƒ½å®ç°å…¨å±€è°ƒ
+// ç”¨å‡½æ•°[é™æ€å¯¹è±¡çš„æ„é€ å‡½æ•°].
+//class Register
+//{
+//public:
+//	Register(const string& name, CREATE_FUNC func)
+//	{
+//        cout << "Register ..." << endl;
+//		DynObjectFactory::Register(name, func);
+//	}
+//};
 
-class Register
+//#define REGISTER_CLASS(class_name) \
+//class class_name##Register \
+//{ \
+//public: \
+//	static void* NewInstance() \
+//	{ \
+//		return new class_name; \
+//	} \
+//private: \
+//	static Register reg_; \
+//}; \
+//Register class_name##Register::reg_(#class_name, class_name##Register::NewInstance)
+
+
+template<typename T>
+class DelegatingClass
 {
 public:
-	Register(const string& name, CREATE_FUNC func)
-	{
-		DynObjectFactory::Register(name, func);
-	}
+    DelegatingClass(const string name)
+    {
+        DynObjectFactory::Register(name, NewInstance);
+    }
+
+    static void* NewInstance()
+    {
+        return new T;
+    }
 };
 
 #define REGISTER_CLASS(class_name) \
-class class_name##Register \
-{ \
-public: \
-	static void* NewInstance() \
-	{ \
-		return new class_name; \
-	} \
-private: \
-	static Register reg_; \
-}; \
-Register class_name##Register::reg_(#class_name, class_name##Register::NewInstance)
+static DelegatingClass<class_name> class_name##Register(#class_name)
+
+//#define REGISTER_CLASS(class_name) \
+//class class_name##Register\
+//{\
+//public:\
+//class_name##Register(const string& name, CREATE_FUNC func)\
+//{\
+//    cout << "Register ..." << endl;\
+//    DynObjectFactory::Register(name, func);\
+//}\
+//};\
+//void* class_name##NewInstance() \
+//{ \
+//    return new class_name; \
+//} \
+//static class_name##Register class_name##_register(#class_name, class_name##NewInstance)
 
 #endif // DYNBASE_H_

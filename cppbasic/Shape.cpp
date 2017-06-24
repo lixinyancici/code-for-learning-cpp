@@ -1,6 +1,6 @@
 #include "Shape.h"
 #include "DynBase.h"
-#include <iostream>
+//#include <iostream>
 using std::cout;
 using std::endl;
 

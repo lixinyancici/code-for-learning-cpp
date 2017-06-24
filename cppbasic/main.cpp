@@ -4467,7 +4467,7 @@ int main(void)
 #endif
 
 //############################ 模板-其它 #######################################
-#if 1
+#if 0
 //==============================================================================
 // 1.缺省模板参数
 //     * 模板类不仅可以传递'数据类型'、'非类型'模板参数还可以传递'数据结构类型'
@@ -4476,9 +4476,16 @@ int main(void)
 //     * 在成员函数中使用类模板形参列表中未声明的参数类型，需要声明成员模板，将成员函数写成函数模板。
 //     * 不同的模板参数的模板类对象之间相互赋值时,需要成员模板.
 // 3.关键字typename
-//     *
+//     * 用以说明后面的东西是个类型,不是数据成员
 // 4.派生类和模板
+//     * 为了运行效率,类模板是相互独立的,即独立设计,没有使用继承的思想.对类模板的扩展是采用适
+//       配器(adapter)来完成的.通用性是模板库的设计出发点,这是由泛型算法和函数对象等手段达到的.
+//     * 派生类的目标之一是代码的复用和程序的通用性,派生类的优点是可以由简到繁,逐步深入,程序
+//       编制过程中,可以充分利用前面的工作,一步步完成一个复杂的任务.这种方式有一定的开销.
+//     * 模板最求的是运行效率,而派生追求的是编程的效率.
 // 5.面向对象与泛型
+//     * 面向对象,通过基类接口,使用一套代码,处理不同的基类; 泛型也是使用一套代码[模板]处理不
+//       同的数据类型.
 //==============================================================================
 #include <iostream>
 using std::cout;
@@ -4553,15 +4560,76 @@ int main(void)
 //############################ 模板-应用 #######################################
 #if 0
 //==============================================================================
-// 模板实现单例模式
-// 动态创建对象改为模板实现
+// 1.模板实现单例模式
+// 2.动态创建对象改为模板实现
 //==============================================================================
 #include <iostream>
+#include <vector>
+using std::vector;
 using std::cout;
 using std::endl;
+#include "Singleton.hpp"
+#include "Shape.h"
+#include "DynBase.h"
+
+//===== 模板实现单例模式 =====
+class ApplicationImpl
+{
+public:
+    ApplicationImpl()
+    {
+        cout << "Application ..." << endl;
+    }
+    ~ApplicationImpl()
+    {
+        cout << "~Application ..." << endl;
+    }
+    void Run()
+    {
+        cout << "Run ..." << endl;
+    }
+};
+
+typedef Singleton<ApplicationImpl> Application;
+// ApplicationImpl本身不是单例模式,但是经过包装器Singleton包装后就是案例模式了.
+
+
+//===== 动态创建对象改为模板实现 =====
+// 控制代码
+void DrawAllShape(const vector<Shape*>& v)
+{
+    vector<Shape*>::const_iterator it;
+    for(it = v.begin(); it != v.end(); ++it) {
+        (*it)->Draw();
+    }
+}
+
+void DeleteAllShape(const vector<Shape*>& v)
+{
+    vector<Shape*>::const_iterator it;
+    for(it = v.begin(); it != v.end(); ++it) {
+        delete (*it);
+    }
+}
 
 int main(void)
 {
+    cout << "main ..." << endl;
+//    Application::GetInstance().Run();
+//    Application::GetInstance().Run();
+
+    // 可以把这些东西放到配置文件中去，新增了类这里的代码也不需要改动。
+    vector<Shape*> v;
+    Shape* ps;
+    ps = static_cast<Shape*>(DynObjectFactory::CreateObject("Circle"));
+    v.push_back(ps);
+    ps = static_cast<Shape*>(DynObjectFactory::CreateObject("Square"));
+    v.push_back(ps);
+    ps = static_cast<Shape*>(DynObjectFactory::CreateObject("Rectangle"));
+    v.push_back(ps);
+
+    DrawAllShape(v);
+    DeleteAllShape(v);
 
     return 0;
 }

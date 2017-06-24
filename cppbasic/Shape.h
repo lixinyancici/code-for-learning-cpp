@@ -1,7 +1,7 @@
 #ifndef SHAPE_H_
 #define SHAPE_H_
 
-class Shape                  // 抽象类
+class Shape                  // 鎶借薄绫�
 {
 public:
 	virtual void Draw() = 0;
